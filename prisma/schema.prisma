@@ -1,0 +1,95 @@
+// This is your Prisma schema file for PostgreSQL
+// You can define your models below
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role {
+  USER
+  ADMIN
+}
+model User {
+  id              String    @id       @default(uuid())
+  email           String    @unique
+  password                  String  
+  name                      String
+  role                      Role      @default(USER)  
+  tasks                     Task[]    @relation(name: "TaskUsers")
+  taskCreated               Task[]    @relation(name: "TaskCreator")
+  projects                  Project[] @relation(name: "ProjectUsers")
+  ownedProjects             Project[] @relation(name: "ProjectOwner")
+  refreshToken              String?
+  refreshTokenExpires  DateTime?
+  verificationToken         String?
+  verificationTokenExpires  DateTime?
+  resetPasswordToken        String?
+  resetPasswordExpires      DateTime?
+  isActive   Boolean        @default(false)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model Blacklist {
+  id         String     @id @default(uuid())
+  token      String     @unique
+ createdAt    DateTime @default(now())
+}
+
+
+
+model Task {
+  id                String              @id @default(uuid())
+  title             String
+  description       String?
+  status            TaskStatus          @default(TODO)
+  priority          TaskPriority        @default (LOW)
+  createdById       String?
+  createdBy         User?                @relation(name: "TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  users              User[]              @relation(name: "TaskUsers")
+  projectId         String?
+  project           Project?            @relation (name: "ProjectTask", fields: [projectId], references: [id], onDelete: Cascade)
+  dueDate           DateTime
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  @@index([status])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BLOCKED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+}
+
+
+model Project {
+  id            String         @id @default(uuid())
+  name          String
+  description   String?
+  ownerId       String
+  owner         User           @relation(name: "ProjectOwner",fields: [ownerId], references: [id], onDelete: Cascade)
+  users         User[]         @relation(name: "ProjectUsers")
+  tasks         Task[]         @relation(name: "ProjectTask") 
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  @@index([ownerId])
+  @@index([name])
+}
+
