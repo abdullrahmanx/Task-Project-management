@@ -8,12 +8,13 @@ import { AdminModule } from './admin/admin.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [ThrottlerModule.forRoot([{
     ttl: 60000,
     limit: 10
-  }]),AuthModule, TasksModule, ProjectsModule, UsersModule, AdminModule],
+  }]),AuthModule, TasksModule, ProjectsModule, UsersModule, AdminModule, CloudinaryModule],
   providers: [
   PrismaService,
   {

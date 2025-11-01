@@ -1,10 +1,11 @@
-import { Controller,Body,UseGuards,Get,Put,Delete, } from '@nestjs/common';
+import { Controller,Body,UseGuards,Get,Put,Delete, UseInterceptors, UploadedFile, } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UserPayLoad } from 'src/common/interfaces/all-interfaces';
 import { UpdateProfileDto } from './dto/updateprofile.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -17,9 +18,12 @@ export class UsersController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @UseInterceptors(FileInterceptor('avatar'))
     @Put('me')
-    async updateProfile (@Body() dto: UpdateProfileDto,@CurrentUser() user: UserPayLoad) {
-        return this.userService.updateProfile(dto,user)
+    async updateProfile (@Body() dto: UpdateProfileDto,
+    @CurrentUser() user: UserPayLoad,
+    @UploadedFile() file?: Express.Multer.File) {
+        return this.userService.updateProfile(dto,user,file)
     }
     @UseGuards(JwtAuthGuard)
     @Delete('/me')

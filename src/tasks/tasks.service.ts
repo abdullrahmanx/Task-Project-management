@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { CreateTaskResponse, TaskResponse, UpdateTaskResponse, UserPayLoad,  DeleteResponse, PaginatedResponse, TaskProject } from 'src/common/interfaces/all-interfaces';
@@ -7,16 +7,22 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskPriority, TaskStatus } from '@prisma/client';
 import { MoveTaskDto } from './dto/move-task.dto';
 import { UpdateStatusPriorityDto } from './dto/update-status-priority.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class TasksService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService,
+        private readonly cloudinaryService: CloudinaryService
+    ) {}
 
- async createTask (dto: CreateTaskDto, user: UserPayLoad): Promise<CreateTaskResponse>{
-        return dto.projectId ? this.createProjectTask(dto,user) : this.createPersonalTask(dto,user)
+ async createTask (dto: CreateTaskDto, user: UserPayLoad,file?: Express.Multer.File): Promise<CreateTaskResponse>{
+        return dto.projectId ? this.createProjectTask(dto,user,file) : this.createPersonalTask(dto,user,file)
     }   
 
-    private async createProjectTask (dto: CreateTaskDto, user: UserPayLoad): Promise<CreateTaskResponse> {
+    private async createProjectTask (dto: CreateTaskDto, 
+        user: UserPayLoad ,file?: Express.Multer.File )
+        : Promise<CreateTaskResponse> {
         
         const project= await this.prisma.project.findFirst({where: {id: dto.projectId}})
         
@@ -25,6 +31,7 @@ export class TasksService {
         if(project.ownerId !== user.id && user.role !== 'ADMIN') {
             throw new UnauthorizedException('Only owner and admins can create tasks and add members')  
         }
+
         if(dto.userIds && dto.userIds.length > 0) {
             const projectMembers = await this.prisma.user.findMany({
                 where: {
@@ -37,6 +44,14 @@ export class TasksService {
             throw new BadRequestException('All assignees must be project members')
             }
         }
+        let fileUrl: string | null = null
+            if(file) {
+                const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
+                if(uploadResult && uploadResult.secure_url) {
+                    fileUrl= uploadResult.secure_url
+            }
+        }
+
         const task= await this.prisma.task.create({
             data : {
                 title: dto.title,
@@ -53,6 +68,7 @@ export class TasksService {
                         {id: user.id}
                     ]
                 },
+                fileUrl,
                 project: {
                     connect :{id: dto.projectId}
                 }
@@ -81,7 +97,15 @@ export class TasksService {
     }
  
 
-    private async createPersonalTask(dto: CreateTaskDto, user: UserPayLoad): Promise<CreateTaskResponse> {
+    private async createPersonalTask(dto: CreateTaskDto, user: UserPayLoad,file?: Express.Multer.File): Promise<CreateTaskResponse> {
+
+            let fileUrl: string | null = null
+            if(file) {
+                const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
+                if(uploadResult && uploadResult.secure_url) {
+                    fileUrl= uploadResult.secure_url
+                }
+            }
 
             const task = await this.prisma.task.create({
                 data: {
@@ -89,6 +113,7 @@ export class TasksService {
                     description: dto.description || 'nothing for now',
                     status: dto.status,
                     priority: dto.priority,
+                    fileUrl,
                     dueDate: new Date(dto.dueDate),
                     createdBy: {
                         connect : {id: user.id}
@@ -220,7 +245,7 @@ export class TasksService {
     })
 
   }
-  async updateTask(taskId: string, dto: UpdateTaskDto,user: UserPayLoad): Promise<UpdateTaskResponse> {
+  async updateTask(taskId: string, dto: UpdateTaskDto,user: UserPayLoad,file?: Express.Multer.File): Promise<UpdateTaskResponse> {
    
            const task = await this.getTaskWithAccess(taskId,user)
             if(!task) throw new NotFoundException('Task not found')
@@ -230,6 +255,13 @@ export class TasksService {
                     throw new UnauthorizedException('Only project owner and admin can update project tasks')
                 }   
             }
+            let fileUrl: string | null = null
+            if(file) {
+                const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
+                if(uploadResult && uploadResult.secure_url) {
+                    fileUrl= uploadResult.secure_url
+                }
+            }
 
             const updatedTask= await this.prisma.task.update({where: {id: taskId},
                 data: {
@@ -237,6 +269,7 @@ export class TasksService {
                 ...(dto.description !== undefined && {description: dto.description}),
                 ...(dto.status !== undefined && {status: dto.status as TaskStatus}),
                 ...(dto.priority !== undefined && {priority: dto.priority as TaskPriority}),
+                ...(fileUrl !== undefined && {fileUrl}),
                 ...(dto.dueDate !== undefined && {dueDate: new Date(dto.dueDate)}),
                 ...(dto.assignedToIds !== undefined && {users: {
                     set: [],
@@ -257,7 +290,7 @@ export class TasksService {
                             }
                     }})
 
-            return {success: true,message: 'Task edited successfully',data: updatedTask}
+            return {success: true,message: 'Task updated successfully',data: updatedTask}
     }
 
     
@@ -303,7 +336,6 @@ export class TasksService {
     }
 
   async moveTask(taskId: string, dto: MoveTaskDto, user: UserPayLoad): Promise<UpdateTaskResponse> {
-        console.log(dto.targetProjectId)
         const task= await this.getTaskWithAccess(taskId,user)
 
         if(!task) throw new NotFoundException('Task not found')
@@ -384,8 +416,14 @@ export class TasksService {
         if(task.projectId &&  task.project?.ownerId !== user.id && task.createdById !== user.id) {
             throw new UnauthorizedException('You are not allowed to delete this task')
         }
+        if(task.fileUrl) {
+           const parts= task.fileUrl.split('/')
+           const fileName= parts[parts.length -1]
+           const filePublicId=`tasks/${fileName.split('.')[0]}` 
+           await this.cloudinaryService.deleteFile(filePublicId)                    
+        }
 
-         await this.prisma.task.delete({where: {id: taskId}})
+        await this.prisma.task.delete({where: {id: taskId}})
 
         return {
             success: true,

@@ -11,6 +11,7 @@ import { ChangePasswordDto } from './dto/changepassword.dto';
 import { UserPayLoad } from 'src/common/interfaces/all-interfaces';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 
 @Injectable()
@@ -18,7 +19,8 @@ export class AuthService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly jwtService: JwtService,
-        private readonly configService: ConfigService) {}
+        private readonly configService: ConfigService,
+       ) {}
 
     private getTokens(userId: string, name: string, role: string) {
         const accessToken = this.jwtService.sign(

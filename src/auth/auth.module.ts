@@ -4,9 +4,10 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt-access-startegy';
-  @Module({
+import { PrismaService } from 'src/prisma/prisma.service';
+
+@Module({
     imports: [
     PassportModule.register({defaultStrategy: 'jwt'}),
     JwtModule.registerAsync({
@@ -20,6 +21,6 @@ import { JwtStrategy } from './strategies/jwt-access-startegy';
     ConfigModule
     ],
     controllers: [AuthController],
-    providers: [AuthService,JwtStrategy],
-  })
+    providers: [AuthService,JwtStrategy, PrismaService],
+})
   export class AuthModule {}

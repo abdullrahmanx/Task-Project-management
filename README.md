@@ -1,25 +1,3 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
@@ -40,59 +18,149 @@ $ npm run start
 # watch mode
 $ npm run start:dev
 
-# production mode
-$ npm run start:prod
+## Task-Project-management (NestJS + Prisma)
+
+This repository contains a Task & Project management API built with NestJS and Prisma (PostgreSQL). The API provides authentication (JWT with refresh tokens), user management, project management, task management, and admin operations.
+
+Main features
+- JWT access & refresh tokens, email verification, password reset flows
+- Role-based admin guard (ADMIN / USER)
+- Rate limiting via @nestjs/throttler
+- Prisma ORM with PostgreSQL datasource
+- Nodemailer (Mailtrap) email templates for verification and password reset
+
+## Quick start
+
+Requirements
+- Node.js (>= 18 recommended)
+- npm
+- PostgreSQL
+
+1) Install dependencies
+
+```cmd
+npm install
 ```
 
-## Run tests
+2) Create a .env file (see example below)
 
-```bash
-# unit tests
-$ npm run test
+3) Generate Prisma client and run migrations (dev)
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```cmd
+npx prisma generate
+npx prisma migrate dev --name init
 ```
 
-## Deployment
+4) Start the app (development)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```cmd
+npm run start
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+The server will listen on PORT (default 3000). CORS is enabled for FRONTEND_URL (defaults to http://localhost:3001).
 
-## Resources
+## Environment variables
+Create a `.env` file at the project root. Example values:
 
-Check out a few resources that may come in handy when working with NestJS:
+```dotenv
+# Database
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/task_db
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# JWT
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
 
-## Support
+# Frontend URL used in email links and CORS
+FRONTEND_URL=http://localhost:3001
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Port (optional)
+PORT=3000
 
-## Stay in touch
+# Mailtrap (used by nodemailer in src/common/utils/email.ts)
+MAILTRAP_HOST=smtp.mailtrap.io
+MAILTRAP_USER=your_mailtrap_user
+MAILTRAP_PASS=your_mailtrap_pass
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Notes
+- If you already have migrations in `prisma/migrations`, `npx prisma migrate deploy` is suitable for production.
 
-## License
+## API Endpoints (summary)
+Below are the main controllers and endpoints. All endpoints that require authentication use the `Authorization: Bearer <token>` header.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Auth (`/auth`)
+- POST /auth/register – Register (body: name, email, password)
+- GET /auth/verify-email/:token – Verify email link
+- POST /auth/login – Login (body: email, password) -> returns accessToken + refreshToken
+- POST /auth/refresh-token – Refresh access token (body: { refreshToken })
+- POST /auth/logout – (Auth) Logout (uses header authorization)
+- POST /auth/forgot-password – Send reset link (body: { email })
+- POST /auth/reset-password/:token – Reset password (body: { newPassword })
+- PUT /auth/change-password – (Auth) Change password (body: currentPassword, newPassword)
+
+Users (`/users`)
+- GET /users/me – (Auth) Get profile
+- PUT /users/me – (Auth) Update profile
+- DELETE /users/me – (Auth) Delete profile (body: { password })
+
+Projects (`/projects`) (Auth required)
+- POST /projects – Create project
+- GET /projects – List projects (pagination)
+- GET /projects/:id – Get project
+- PUT /projects/:id – Update project
+- DELETE /projects/:id – Delete project
+
+Tasks (`/tasks`) (Auth required)
+- POST /tasks – Create task
+- GET /tasks – List tasks (filters + pagination)
+- GET /tasks/:id – Get task
+- PUT /tasks/:id – Update task
+- PUT /tasks/status/:id – Update status/priority
+- PUT /tasks/move-task/:id – Move task to another project or users
+- DELETE /tasks/:id – Delete task
+
+Admin (`/admin`) (Auth + AdminGuard)
+- GET /admin/dashboard – Dashboard stats
+- GET /admin/users – List users
+- GET /admin/users/:id – Get user
+- PUT /admin/role/:id – Update user role
+- DELETE /admin/users/:id – Delete user
+- GET /admin/projects – Admin list projects
+- GET /admin/projects/:id – Admin get project
+- PUT /admin/projects/:id – Admin update
+- DELETE /admin/projects/:id – Admin delete
+- GET /admin/tasks – Admin list tasks
+- GET /admin/tasks/:id – Admin get task
+- PUT /admin/tasks/:id – Admin update
+- DELETE /admin/tasks/:id – Admin delete
+
+## Security / Behavior notes
+- Rate limiting applied globally via ThrottlerModule in `AppModule`.
+- Helmet is enabled in `main.ts` for secure HTTP headers.
+- JWT access tokens expire in ~15 minutes; refresh tokens are stored (hashed) in DB.
+- Logout blacklists access tokens by saving them to `blacklist` model in the database.
+
+## Database schema (Prisma)
+Key models are `User`, `Project`, `Task`, and `Blacklist`. See `prisma/schema.prisma` for full definitions and enums (TaskStatus, TaskPriority, Role).
+
+## Email
+Email sending uses Mailtrap credentials via environment variables (`MAILTRAP_HOST`, `MAILTRAP_USER`, `MAILTRAP_PASS`). The code lives in `src/common/utils/email.ts` and has templates for verification and password reset.
+
+## Tests
+- Unit/e2e tests are configured with Jest (see `test/` and `jest` scripts in `package.json`). Run:
+
+```cmd
+npm run test
+npm run test:e2e
+```
+
+## Contributing / Next steps
+- Add OpenAPI / Swagger docs (nestjs/swagger is installed — you can mount Swagger in `main.ts`)
+- Add CI pipeline (optional) and clearer migration / seeding scripts
+- Add more unit/e2e tests for controllers and services
+
+## Contact
+If you want me to expand the README with example requests (curl / Postman collections), or to generate Swagger docs and add a short developer guide, tell me which you'd like next and I will proceed.
+
+---
+Generated README: summarized endpoints, environment, and setup steps for this repo.

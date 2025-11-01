@@ -25,6 +25,25 @@ export interface PaginatedResponse<T> {
     nextPage: number | null
   }
 }
+type Profile= Prisma.UserGetPayload<{
+  select: {
+    id: true,
+    name: true,
+    email: true,
+    avatarUrl: true
+  }
+}>
+
+export interface GetProfileResponse {
+  success: boolean
+  data: Profile
+}
+export interface UpdateProfileResponse {
+  success: boolean
+  message: string
+  data: Profile
+}
+
 
 //  Tasks 
 export type TaskProject = Prisma.TaskGetPayload<{

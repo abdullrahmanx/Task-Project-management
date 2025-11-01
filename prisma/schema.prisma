@@ -16,17 +16,19 @@ enum Role {
   ADMIN
 }
 model User {
-  id              String    @id       @default(uuid())
-  email           String    @unique
+  id                        String    @id       @default(uuid())
+  email                     String    @unique
   password                  String  
   name                      String
-  role                      Role      @default(USER)  
+  role                      Role      @default(USER) 
+  avatarUrl                 String?
+  avatarPublidId           String?
   tasks                     Task[]    @relation(name: "TaskUsers")
   taskCreated               Task[]    @relation(name: "TaskCreator")
   projects                  Project[] @relation(name: "ProjectUsers")
   ownedProjects             Project[] @relation(name: "ProjectOwner")
   refreshToken              String?
-  refreshTokenExpires  DateTime?
+  refreshTokenExpires       DateTime?
   verificationToken         String?
   verificationTokenExpires  DateTime?
   resetPasswordToken        String?
@@ -52,7 +54,9 @@ model Task {
   priority          TaskPriority        @default (LOW)
   createdById       String?
   createdBy         User?                @relation(name: "TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  users              User[]              @relation(name: "TaskUsers")
+  users             User[]              @relation(name: "TaskUsers")
+  fileUrl           String?
+  filePublicId      String?
   projectId         String?
   project           Project?            @relation (name: "ProjectTask", fields: [projectId], references: [id], onDelete: Cascade)
   dueDate           DateTime
