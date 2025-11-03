@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UserPayLoad } from 'src/common/interfaces/all-interfaces';
-import { UpdateProfileDto } from './dto/updateprofile.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 

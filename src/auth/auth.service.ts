@@ -11,7 +11,6 @@ import { ChangePasswordDto } from './dto/changepassword.dto';
 import { UserPayLoad } from 'src/common/interfaces/all-interfaces';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 
 @Injectable()
@@ -44,7 +43,7 @@ export class AuthService {
         const verificationTokenExpires= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
        
-         const newUser= await this.prisma.user.create({
+        const newUser= await this.prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
@@ -151,22 +150,19 @@ export class AuthService {
             throw new UnauthorizedException('Invalid or expired token')
         }
 
-        const {accessToken,refreshToken: newRefreshToken}= this.getTokens(user.id,user.name,user.role)
+        const tokens= this.getTokens(user.id,user.name,user.role)
 
         await this.prisma.user.update({
             where: {
                 id: user.id
             },
             data :{
-                refreshToken: await bcrypt.hash(newRefreshToken,10)
+                refreshToken: await bcrypt.hash(tokens.refreshToken,10)
             }
         })
         return {
             success: true,
-            data: {
-                accessToken,
-                refreshToken
-            }
+            data: tokens
         }
     }
     async logout(id : string,accessToken: string): Promise<{success: boolean,message: string}> {

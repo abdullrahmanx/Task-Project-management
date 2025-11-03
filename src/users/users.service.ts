@@ -1,7 +1,7 @@
 import { Injectable,NotFoundException,BadRequestException,UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetProfileResponse, UpdateProfileResponse, UserPayLoad } from 'src/common/interfaces/all-interfaces';
-import { UpdateProfileDto} from './dto/updateprofile.dto';
+import { UpdateProfileDto} from './dto/update-profile.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { DeleteResponse } from 'src/common/interfaces/all-interfaces';
 import * as bcrypt from 'bcryptjs'
@@ -36,7 +36,7 @@ export class UsersService {
             const updateUser= await this.prisma.user.findUnique({where: {id: user.id}})
             if(!updateUser) throw new NotFoundException('User not found')
         
-            const updatedFields: Record<string, string>= {}    
+            const updatedFields: Record<string, string | null>= {}    
             if(dto.name) updatedFields.name= dto.name
 
             if(dto.email) {
