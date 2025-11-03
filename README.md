@@ -675,13 +675,15 @@ CMD ["npm", "run", "start:prod"]
 
 ## 📝 Testing
 
+### Running Tests
+
 Run Jest tests:
 
 ```bash
 # Unit tests
 npm run test
 
-# Watch mode
+# Watch mode (re-run on file changes)
 npm run test:watch
 
 # Coverage report
@@ -689,6 +691,87 @@ npm run test:cov
 
 # End-to-end tests
 npm run test:e2e
+```
+
+### Test Coverage
+
+Your project includes comprehensive unit tests for:
+
+#### **Auth Service Tests** (`src/auth/auth.service.spec.ts`)
+- ✅ **Token Generation** – Tests JWT access & refresh token creation with correct expiry times
+- ✅ **User Registration** – Tests user creation, email verification token generation, and welcome email sending
+- ✅ **Email Verification** – Tests token validation and account activation
+- ✅ **Login** – Tests user authentication and token generation
+- ✅ **Token Refresh** – Tests refresh token validation and new token issuance
+- ✅ **Logout** – Tests token blacklisting and refresh token clearing
+- ✅ **Forgot Password** – Tests password reset email sending and token hashing
+- ✅ **Reset Password** – Tests password reset with token validation
+- ✅ **Change Password** – Tests password update with current password verification
+
+**Mocks:**
+- `bcryptjs` – Password hashing
+- `crypto` – Random token generation
+- `sendEmail` – Email utilities
+- `PrismaService` – Database operations
+- `JwtService` – Token signing
+
+#### **Users Service Tests** (`src/users/users.service.spec.ts`)
+- ✅ **Get Profile** – Tests retrieving user profile data
+- ✅ **Profile Not Found** – Tests error handling when user doesn't exist
+- ✅ **Update Profile with Avatar** – Tests profile update and Cloudinary file upload
+- ✅ **Delete Account** – Tests account deletion with password verification
+- ✅ **Avatar Upload/Delete** – Tests Cloudinary integration for avatar management
+
+**Mocks:**
+- `CloudinaryService` – File upload/deletion
+- `PrismaService` – Database operations
+- `bcryptjs` – Password comparison
+
+### Test Example
+
+**Auth Service Test Example:**
+```typescript
+// Testing token generation
+it('should generate tokens', () => {
+    const result = service['getTokens']('user-id', 'John', 'USER');
+    
+    expect(result).toEqual({
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token' 
+    })
+})
+```
+
+**Users Service Test Example:**
+```typescript
+// Testing profile retrieval
+it("GET user profile", async () => {
+    mockPrismaService.user.findUnique.mockResolvedValue(mockUser)
+    
+    const result = await service.getProfile(userPayLoad)
+    
+    expect(result).toEqual({
+        success: true,
+        data: mockUser
+    })
+})
+```
+
+### Running Specific Tests
+
+```bash
+# Run only auth tests
+npm run test -- auth
+
+# Run only user tests
+npm run test -- users
+
+# Run with verbose output
+npm run test -- --verbose
+
+# Generate HTML coverage report
+npm run test:cov
+# Open coverage/lcov-report/index.html in browser
 ```
 
 ---
