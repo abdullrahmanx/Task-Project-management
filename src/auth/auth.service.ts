@@ -236,6 +236,9 @@ export class AuthService {
     async changePassword(dto: ChangePasswordDto,user: UserPayLoad): Promise<{success: boolean,message: string}> {
         const existingUser= await this.prisma.user.findUnique({where: {id: user.id}})
         if(!existingUser) throw new NotFoundException('User not found')
+        if(dto.currentPassword === dto.newPassword) {
+            throw new BadRequestException('Current password and new password cannot be equal')
+        }   
         const currentPassHash= await bcrypt.compare(dto.currentPassword,existingUser.password)    
         if(!currentPassHash) throw new BadRequestException('Current password is incorrect')
     
