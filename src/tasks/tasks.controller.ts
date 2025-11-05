@@ -1,27 +1,26 @@
-import { Controller,Body, Post, UseGuards, Get,Put,Query, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller,Body, Post, UseGuards, Get,Put,Query, Param, Delete, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { CreateTaskDto } from './dto/create-task.dto';
 import {  UserPayLoad } from 'src/common/interfaces/all-interfaces';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { MoveTaskDto } from './dto/move-task.dto';
-import { PaginateDto, TaskQueryDto } from 'src/common/paginate/paginate';
+import {  TaskQueryDto } from 'src/common/paginate/paginate';
 import { UpdateStatusPriorityDto } from './dto/update-status-priority.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('tasks')
 export class TasksController {
     constructor(private readonly taskService: TasksService) {}
 
     @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FilesInterceptor('files',5))
     @Post('/')
     async createTask (@Body() dto: CreateTaskDto, @CurrentUser() user: UserPayLoad,
-    @UploadedFile() file?: Express.Multer.File
+    @UploadedFiles() files?: Express.Multer.File[]
     ){
-        return this.taskService.createTask(dto,user,file)
+        return this.taskService.createTask(dto,user,files)
     }
 
     @UseGuards(JwtAuthGuard)
@@ -35,11 +34,11 @@ export class TasksController {
         return this.taskService.getTask(id,user)
     }
     @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FilesInterceptor('files',5))
     @Put('/:id')
     async updateTask(@Param('id') id: string, @Body() dto: UpdateTaskDto,
-    @CurrentUser() user: UserPayLoad, @UploadedFile() file?: Express.Multer.File) {
-        return this.taskService.updateTask(id,dto,user,file)
+    @CurrentUser() user: UserPayLoad, @UploadedFiles() files?: Express.Multer.File[]) {
+        return this.taskService.updateTask(id,dto,user,files)
     }
     @UseGuards(JwtAuthGuard)
     @Put('/status/:id')

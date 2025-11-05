@@ -39,7 +39,7 @@ export class UpdateTaskDto {
     @IsUUID()
     assignedToIds?: string[]
 
-    @AtLeastOneField()
-    _atLeastOne!: string
+    // @AtLeastOneField()
+    // _atLeastOne!: string
 
 }

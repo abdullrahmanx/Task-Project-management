@@ -16,12 +16,12 @@ export class TasksService {
         private readonly cloudinaryService: CloudinaryService
     ) {}
 
- async createTask (dto: CreateTaskDto, user: UserPayLoad,file?: Express.Multer.File): Promise<CreateTaskResponse>{
-        return dto.projectId ? this.createProjectTask(dto,user,file) : this.createPersonalTask(dto,user,file)
+ async createTask (dto: CreateTaskDto, user: UserPayLoad,files?: Express.Multer.File[]): Promise<CreateTaskResponse>{
+        return dto.projectId ? this.createProjectTask(dto,user,files) : this.createPersonalTask(dto,user,files)
     }   
 
     private async createProjectTask (dto: CreateTaskDto, 
-        user: UserPayLoad ,file?: Express.Multer.File )
+        user: UserPayLoad ,files?: Express.Multer.File[] )
         : Promise<CreateTaskResponse> {
         
         const project= await this.prisma.project.findFirst({where: {id: dto.projectId}})
@@ -44,13 +44,17 @@ export class TasksService {
             throw new BadRequestException('All assignees must be project members')
             }
         }
-        let fileUrl: string | null = null
-            if(file) {
+        
+        let fileUrl: string[]= []
+            if(files && files.length) {
+            for(const file of files) {
                 const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
                 if(uploadResult && uploadResult.secure_url) {
-                    fileUrl= uploadResult.secure_url
+                    console.log('Cloudinary upload result:', uploadResult);
+                    fileUrl.push(uploadResult.secure_url)
             }
         }
+    }
 
         const task= await this.prisma.task.create({
             data : {
@@ -97,14 +101,16 @@ export class TasksService {
     }
  
 
-    private async createPersonalTask(dto: CreateTaskDto, user: UserPayLoad,file?: Express.Multer.File): Promise<CreateTaskResponse> {
+    private async createPersonalTask(dto: CreateTaskDto, user: UserPayLoad,files?: Express.Multer.File[]): Promise<CreateTaskResponse> {
 
-            let fileUrl: string | null = null
-            if(file) {
+            let fileUrl: string[] = []
+            if(files && files.length) {
+              for(const file of files) {
                 const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
                 if(uploadResult && uploadResult.secure_url) {
-                    fileUrl= uploadResult.secure_url
+                    fileUrl.push(uploadResult.secure_url)
                 }
+            }
             }
 
             const task = await this.prisma.task.create({
@@ -245,7 +251,7 @@ export class TasksService {
     })
 
   }
-  async updateTask(taskId: string, dto: UpdateTaskDto,user: UserPayLoad,file?: Express.Multer.File): Promise<UpdateTaskResponse> {
+  async updateTask(taskId: string, dto: UpdateTaskDto,user: UserPayLoad,files?: Express.Multer.File[]): Promise<UpdateTaskResponse> {
    
            const task = await this.getTaskWithAccess(taskId,user)
             if(!task) throw new NotFoundException('Task not found')
@@ -255,13 +261,15 @@ export class TasksService {
                     throw new UnauthorizedException('Only project owner and admin can update project tasks')
                 }   
             }
-            let fileUrl: string | null = null
-            if(file) {
+            let fileUrl= task.fileUrl ||  []
+            if(files && files.length) {
+             for (const file of files) {
                 const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
                 if(uploadResult && uploadResult.secure_url) {
-                    fileUrl= uploadResult.secure_url
+                    fileUrl.push(uploadResult.secure_url)
                 }
             }
+        }
 
             const updatedTask= await this.prisma.task.update({where: {id: taskId},
                 data: {
@@ -416,12 +424,14 @@ export class TasksService {
         if(task.projectId &&  task.project?.ownerId !== user.id && task.createdById !== user.id) {
             throw new UnauthorizedException('You are not allowed to delete this task')
         }
-        if(task.fileUrl) {
-           const parts= task.fileUrl.split('/')
+        if(task.fileUrl && task.fileUrl.length) {
+        for (const url of task.fileUrl) {
+           const parts= url.split('/')
            const fileName= parts[parts.length -1]
            const filePublicId=`tasks/${fileName.split('.')[0]}` 
            await this.cloudinaryService.deleteFile(filePublicId)                    
         }
+    }
 
         await this.prisma.task.delete({where: {id: taskId}})
 

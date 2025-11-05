@@ -55,7 +55,7 @@ model Task {
   createdById       String?
   createdBy         User?                @relation(name: "TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
   users             User[]              @relation(name: "TaskUsers")
-  fileUrl           String?
+  fileUrl           String[]
   filePublicId      String?
   projectId         String?
   project           Project?            @relation (name: "ProjectTask", fields: [projectId], references: [id], onDelete: Cascade)

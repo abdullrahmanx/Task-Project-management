@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {v2 as cloudinary} from 'cloudinary'
+import {v2 as cloudinary, UploadApiResponse} from 'cloudinary'
 
 @Injectable()
 export class CloudinaryService {
@@ -12,7 +12,7 @@ export class CloudinaryService {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
     
-    async uploadFile(file: Express.Multer.File,folder: string) {
+    async uploadFile(file: Express.Multer.File,folder: string): Promise<UploadApiResponse> {
 
         if(!file) {
             throw new BadRequestException('No file uploaded')
@@ -21,16 +21,17 @@ export class CloudinaryService {
             throw new BadRequestException(`Invalid file mimetype allowed mimetypes: ${this.allowedMimeTypes.join(', ')}`)
         }
         return new Promise((resolve,reject) => {
-            cloudinary.uploader.upload_stream({folder},(error,result) => {
-                if(error) reject(error)
+            const upload= cloudinary.uploader.upload_stream({folder},(error,result) => {
+                if(error) return reject(error)
+                    
                 if(!result) {
-                    reject(new Error('Upload result is undefined'))
+                    return reject(new Error('Upload result is undefined'))
                 }
                 resolve(result)    
             })
-            .end(file.buffer)
-        })
-    }
+            upload.end(file.buffer)
+        }) 
+    } 
     async deleteFile(publicId: string) {
         await cloudinary.uploader.destroy(publicId)
     }
