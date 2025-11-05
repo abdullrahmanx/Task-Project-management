@@ -50,7 +50,6 @@ export class TasksService {
             for(const file of files) {
                 const uploadResult= await this.cloudinaryService.uploadFile(file,'tasks') as  UploadApiResponse
                 if(uploadResult && uploadResult.secure_url) {
-                    console.log('Cloudinary upload result:', uploadResult);
                     fileUrl.push(uploadResult.secure_url)
             }
         }
