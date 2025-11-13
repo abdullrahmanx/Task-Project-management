@@ -45,7 +45,7 @@ export class CloudinaryService {
        }
 
        if(!this.allowedMimeTypes.includes(file.mimetype)) {
-            throw new BadRequestException(`Invalid field mimetype allowed mimetypes:
+            throw new BadRequestException(`Invalid file mimetype allowed mimetypes:
                 ${this.allowedMimeTypes.join(',')}`)
        }
 
@@ -64,7 +64,7 @@ export class CloudinaryService {
        const maxSize= isImage ? this.MAX_IMAGE_SIZE : this.MAX_DOCUMENT_SIZE
        
        if(file.size > maxSize) {
-        throw new BadRequestException('File size exceeded')
+        throw new BadRequestException(`File too large. Maximum size: ${maxSize / 1024 / 1024} MB`)
        }
        
       const resourceType= isImage ? 'image' : 'raw'
@@ -77,10 +77,9 @@ export class CloudinaryService {
         .end(file.buffer)
       })
     }  
-    async deleteFile(id: string) {
-        
+    async deleteFile(publicId: string,resourceType: 'image' | 'raw' = 'image') {
         try {
-         const result= await cloudinary.uploader.destroy(id)
+         const result= await cloudinary.uploader.destroy(publicId,{resource_type: resourceType})
          if(result.result !== 'ok') {
             throw new Error('File deletion failed');
          }
