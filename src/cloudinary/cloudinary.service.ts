@@ -1,38 +1,92 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {v2 as cloudinary, UploadApiResponse} from 'cloudinary'
+import {v2 as cloudinary} from 'cloudinary'
+import * as path from 'path';
 
 @Injectable()
 export class CloudinaryService {
-    allowedMimeTypes= [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    private readonly allowedMimeTypes= [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
-    
-    async uploadFile(file: Express.Multer.File,folder: string): Promise<UploadApiResponse> {
+     private readonly allowedExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.webp',
+        '.pdf',
+        '.doc',
+        '.docx'
+    ] 
 
-        if(!file) {
-            throw new BadRequestException('No file uploaded')
-        }
-        if(!this.allowedMimeTypes.includes(file.mimetype)) {
-            throw new BadRequestException(`Invalid file mimetype allowed mimetypes: ${this.allowedMimeTypes.join(', ')}`)
-        }
-        return new Promise((resolve,reject) => {
-            const upload= cloudinary.uploader.upload_stream({folder},(error,result) => {
-                if(error) return reject(error)
-                    
-                if(!result) {
-                    return reject(new Error('Upload result is undefined'))
-                }
-                resolve(result)    
-            })
-            upload.end(file.buffer)
-        }) 
-    } 
-    async deleteFile(publicId: string) {
-        await cloudinary.uploader.destroy(publicId)
+    private readonly mimeToExtMap= {
+        'image/jpeg': ['.jpg', '.jpeg'],
+        'image/png': ['.png'],
+        'image/webp': ['.webp'],
+        'application/pdf': ['.pdf'],
+        'application/msword': ['.doc'],
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    }
+
+    private readonly MAX_IMAGE_SIZE= 5 * 1024 * 1024
+    private readonly MAX_DOCUMENT_SIZE= 10 * 1024 * 1024
+    
+    async uploadFile(file: Express.Multer.File, folder: string) {
+
+       if(!file) {
+        throw new BadRequestException('No file uploaded')
+       }
+
+       if (!file.buffer || file.size === 0) {
+            throw new BadRequestException('File is empty');
+       }
+
+       if(!this.allowedMimeTypes.includes(file.mimetype)) {
+            throw new BadRequestException(`Invalid field mimetype allowed mimetypes:
+                ${this.allowedMimeTypes.join(',')}`)
+       }
+
+       const fileExt= path.extname(file.originalname).toLowerCase()
+       if(!this.allowedExtensions.includes(fileExt)) {
+        throw new BadRequestException(`Invalid file extension. Allowed extensions:
+            ${this.allowedExtensions.join(', ')}`)
+       }
+       
+       const expectedExtensions= this.mimeToExtMap[file.mimetype]
+       if(!expectedExtensions?.includes(fileExt)) {
+        throw new BadRequestException('File extension does not match file type - possible spoofing detected');
+       }
+
+       const isImage= file.mimetype.startsWith('image/')
+       const maxSize= isImage ? this.MAX_IMAGE_SIZE : this.MAX_DOCUMENT_SIZE
+       
+       if(file.size > maxSize) {
+        throw new BadRequestException('File size exceeded')
+       }
+       
+      const resourceType= isImage ? 'image' : 'raw'
+
+      return new Promise((resolve,reject) => {
+        cloudinary.uploader.upload_stream({folder,resource_type: resourceType}, (error,result) => {
+            if (error) return reject(new BadRequestException('Error uploading file'));
+            resolve(result)
+        })
+        .end(file.buffer)
+      })
+    }  
+    async deleteFile(id: string) {
+        
+        try {
+         const result= await cloudinary.uploader.destroy(id)
+         if(result.result !== 'ok') {
+            throw new Error('File deletion failed');
+         }
+        }catch(err) {
+            throw new BadRequestException('Error deleting file');
+        }     
     }
 }
+
